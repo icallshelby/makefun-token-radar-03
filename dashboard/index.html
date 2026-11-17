@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Launch Radar — radar-4</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-main">
+        <div class="logo-area">
+          <div class="radar-ping"></div>
+          <h1>TOKEN LAUNCH RADAR</h1>
+          <span class="badge model-badge">radar-4</span>
+        </div>
+        <div class="header-stats" id="headerStats">
+          <div class="stat-pill"><span class="label">Board:</span> <span class="val" id="statRows">198</span></div>
+          <div class="stat-pill"><span class="label">Watchlist:</span> <span class="val" id="statWatchlist">40</span></div>
+          <div class="stat-pill"><span class="label">Blind Test:</span> <span class="val" id="statBlind">within ×2.96 (n=64)</span></div>
+        </div>
+      </div>
+      <p class="subtitle" id="headerSubtitle">Systematic pre-token valuation via log-log size curve with per-category intercept calibration, bootstrap uncertainty bands, and netted farm economics.</p>
+    </header>
+
+    <!-- NEW SECTION: How we know the model works (Directly above board) -->
+    <section class="oos-section">
+      <div class="oos-header">
+        <h3>How We Know the Model Works: Out-of-Sample Blind Validation & Size Curve</h3>
+        <span class="badge model-badge" id="oosBadge">Two-Layer OOS Validation</span>
+      </div>
+      <div class="oos-body">
+        <div class="oos-intro">
+          <p id="oosIntroText">Rigorously tested against held-out protocols the model never saw during calibration. Radar-4 size curve significantly outperforms global median and category-median baselines across both time-split and random-split tests.</p>
+        </div>
+        
+        <div class="oos-grid">
+          <!-- OOS Table -->
+          <div class="oos-table-wrapper">
+            <div class="section-title">Out-of-Sample Performance Table (3 Models × 2 Splits)</div>
+            <table class="radar-table oos-table" style="font-size: 11.5px;">
+              <thead>
+                <tr>
+                  <th>Split & Model</th>
+                  <th>Median ×Err</th>
+                  <th>Mean LogErr</th>
+                  <th>P90 LogErr</th>
+                  <th>R²</th>
+                  <th>n</th>
+                </tr>
+              </thead>
+              <tbody id="oosTbody">
+                <!-- Populated by app.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Size Curve Chart (Inline Static SVG) -->
+          <div class="chart-wrapper">
+            <div class="section-title">Size Curve (Log-Log Market Cap vs TVL) & Top-10 Anchors</div>
+            <div class="svg-container" id="svgContainer">
+              <!-- Rendered dynamically by app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Calibration & Model Explainer Details -->
+        <div class="calibration-row">
+          <div class="calibration-col">
+            <div class="section-title">Runtime Category Intercept Calibration (n ≥ 5)</div>
+            <div class="table-container" style="max-height: 160px; overflow-y: auto;">
+              <table class="radar-table" style="font-size: 11px;">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Comps (n)</th>
+                    <th>Shift (dex)</th>
+                    <th>Top Comps</th>
+                  </tr>
+                </thead>
+                <tbody id="calibrationTbody">
+                  <!-- Populated by app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="calibration-col">
+            <div class="section-title">Model Specifications & Assumptions</div>
+            <div class="constants-grid" style="font-size: 11.5px; line-height: 1.4;">
+              <div class="c-item"><strong>Size Curve:</strong> log10(mcap) = a + b·log10(TVL) + shift. Slope b = <span id="modelSlope">0.52</span> (CI 90%).</div>
+              <div class="c-item"><strong>Bootstrap:</strong> 200 resamples (PRNG seed from snapshot date); bands [p10, p90] per row.</div>
+              <div class="c-item"><strong>Farm Economics:</strong> Cost = gas per chain + 5% annual opportunity cost. Value = implied × P(airdrop 70%) × P(qualify 50%) × 5% FDV.</div>
+              <div class="c-item"><strong>Verdicts:</strong> FARM (net ≥ $100), THIN ($0 ≤ net < $100), SKIP (net < $0).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <div class="tabs-group">
+        <button class="tab-btn active" data-tab="pre-token">Pre-Token Board (<span id="countPre">198</span>)</button>
+        <button class="tab-btn" data-tab="live">Live Tokens (<span id="countLive">24</span>)</button>
+      </div>
+      <div class="filters-group">
+        <input type="text" id="searchInput" placeholder="Search protocol, category, chain..." autocomplete="off">
+        <select id="categorySelect">
+          <option value="">All Categories</option>
+        </select>
+        <select id="chainSelect">
+          <option value="">All Chains</option>
+        </select>
+        <select id="verdictSelect">
+          <option value="">All Verdicts</option>
+          <option value="FARM">FARM</option>
+          <option value="THIN">THIN</option>
+          <option value="SKIP">SKIP</option>
+        </select>
+        <button id="resetFilters" class="subtle-btn">Reset</button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Pre-Token Table View -->
+      <div id="preTokenView" class="view-panel active">
+        <div class="table-container">
+          <table class="radar-table" id="boardTable">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="rank">Rank</th>
+                <th class="sortable" data-sort="name">Protocol</th>
+                <th class="sortable" data-sort="tvl">TVL ($)</th>
+                <th class="sortable" data-sort="change">7d Change</th>
+                <th class="sortable" data-sort="age">Age</th>
+                <th class="sortable" data-sort="multiple">Effective Mult</th>
+                <th class="sortable" data-sort="net">Net Farm $</th>
+                <th class="sortable" data-sort="verdict">Verdict</th>
+                <th class="sortable desc-default" data-sort="implied">Implied Value ($)</th>
+              </tr>
+            </thead>
+            <tbody id="boardTbody">
+              <!-- Populated by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Tokens View -->
+      <div id="liveView" class="view-panel">
+        <div class="live-notice">
+          <strong>Notice:</strong> The protocols below already trade on secondary markets. Market capitalization and TVL are shown for reference; these are not model-implied claims.
+        </div>
+        <div class="table-container">
+          <table class="radar-table" id="liveTable">
+            <thead>
+              <tr>
+                <th>Protocol</th>
+                <th>Category</th>
+                <th>Chains</th>
+                <th>TVL ($)</th>
+                <th>Market Cap ($)</th>
+                <th>7d Change</th>
+              </tr>
+            </thead>
+            <tbody id="liveTbody">
+              <!-- Populated by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Detail Drawer / Panel Modal -->
+    <div id="detailOverlay" class="detail-overlay">
+      <div class="detail-drawer" id="detailDrawer">
+        <div class="drawer-header">
+          <div class="drawer-title-area">
+            <span class="drawer-rank" id="drawerRank">#1</span>
+            <h2 id="drawerName">Protocol Name</h2>
+            <span class="badge category-badge" id="drawerCategory">Lending</span>
+          </div>
+          <button class="close-btn" id="closeDrawer">&times;</button>
+        </div>
+        <div class="drawer-body" id="drawerBody">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Methodology Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <p><strong>Methodology Note:</strong> Implied valuation figures are this entry's proprietary analytical claims. Snapshot source: LlamaFi protocols snapshot.</p>
+        <p class="copyright">Token Launch Radar (radar-4) · Standard library TypeScript implementation · Zero external network dependencies.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
